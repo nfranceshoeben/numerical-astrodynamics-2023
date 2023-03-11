@@ -55,12 +55,14 @@ class ThrustGuidance:
             current_keplerian_state = element_conversion.cartesian_to_keplerian( current_cartesian_state, gravitational_parameter )
 
             # Compute and return current thrust direction (3x1 vector)
-            thrust_direction = XXXX
-            XXXX
+            radial_unit_vector = current_cartesian_state[0:3]/np.linalg.norm(current_cartesian_state[0:3])
+            vel_unit_vector = current_cartesian_state[3:]/np.linalg.norm(current_cartesian_state[3:])
+            thrust_direction = vel_unit_vector
+            #XXXX
 
             # Here, the direction of the thrust (in a frame with inertial orientation; same as current_cartesian_state)
             # should be returned as a numpy unit vector (3x1)
-            return XXXX
+            return thrust_direction
 
         # If no computation is to be done, return zeros
         else
@@ -77,11 +79,11 @@ class ThrustGuidance:
             current_keplerian_state = element_conversion.cartesian_to_keplerian( current_cartesian_state, gravitational_parameter )
 
             # Compute and return current thrust magnitude (scalar)
-            thrust_magnitude = XXXX
-            XXXX
+            thrust_magnitude = 1.0
+            #XXXX
 
             # Here, the value of the thrust magnitude (in Newtons, as a single floating point variable), should be returned
-            return XXXX
+            return thrust_magnitude
         # If no computation is to be done, return zeros
         else:
             return 0.0
@@ -93,9 +95,9 @@ class ThrustGuidance:
 current_directory = os.getcwd()
 
 # # student number: 1244779 --> 1244ABC
-A = XXXX
-B = XXXX
-C = XXXX
+A = 5
+B = 5
+C = 4
 
 simulation_start_epoch = 35.4 * constants.JULIAN_YEAR + A * 7.0 * constants.JULIAN_DAY + B * constants.JULIAN_DAY + C * constants.JULIAN_DAY / 24.0
 simulation_end_epoch = simulation_start_epoch + 344.0 * constants.JULIAN_DAY / 24.0
