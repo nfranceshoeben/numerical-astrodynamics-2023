@@ -263,18 +263,19 @@ ax6.set_ylabel('True Anomaly [rad]')
 # Saturn Gravity, Europa Gravity, Io Gravity, Callisto Gravity, Ganymede Spherical 0,0, Ganymede Spherical 2,0, Ganymede Spherical 2,2,
 # Jupiter Spherical 0,0, Jupiter Spherical 2,0, Jupiter Spherical 4,0
 
+'''
 fig7 = plt.figure()
 ax1 = fig7.add_subplot(1,1,1)
 ax2 = ax1.twinx()
 ax1.plot(time_days,kepler_elements[:,6], 'C0', label='Ganymede Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,7], 'C0--', label='Ganymede Aerodynamic Acceleration')
+#ax2.plot(time_days,kepler_elements[:,7], 'C0--', label='Ganymede Aerodynamic Acceleration')
 ax2.plot(time_days,kepler_elements[:,8], 'C1',label='Jupiter Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,9], 'C2',label='Sun Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,10], 'C2--', label='Sun Radiation Pressure')
-ax2.plot(time_days,kepler_elements[:,11], 'C3',label='Saturn Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,12], 'C4',label='Europa Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,13], 'C5',label='Io Gravitational Acceleration')
-ax2.plot(time_days,kepler_elements[:,14], 'C6',label='Callisto Gravitational Acceleration')
+#ax2.plot(time_days,kepler_elements[:,9], 'C2',label='Sun Gravitational Acceleration')
+#ax2.plot(time_days,kepler_elements[:,10], 'C2--', label='Sun Radiation Pressure')
+#ax2.plot(time_days,kepler_elements[:,11], 'C3',label='Saturn Gravitational Acceleration')
+#ax2.plot(time_days,kepler_elements[:,12], 'C4',label='Europa Gravitational Acceleration')
+#ax2.plot(time_days,kepler_elements[:,13], 'C5',label='Io Gravitational Acceleration')
+#ax2.plot(time_days,kepler_elements[:,14], 'C6',label='Callisto Gravitational Acceleration')
 lines, labels = ax1.get_legend_handles_labels()
 lines2, labels2 = ax2.get_legend_handles_labels()
 test = lines+lines2
@@ -295,6 +296,38 @@ ax2.set_ylabel('Acceleration [m/s^2]')
 ax2.yaxis.label.set_color('C1')
 #ax1.legend()
 
+fig72 = plt.figure()
+ax1 = fig72.add_subplot(1,1,1)
+ax2 = ax1.twinx()
+ax1.plot(time_days,kepler_elements[:,12], 'C4',label='Europa Gravitational Acceleration')
+ax1.plot(time_days,kepler_elements[:,13], 'C5',label='Io Gravitational Acceleration')
+ax1.plot(time_days,kepler_elements[:,10], 'C2--', label='Sun Radiation Pressure')
+ax1.plot(time_days,kepler_elements[:,14], 'C6',label='Callisto Gravitational Acceleration')
+ax2.plot(time_days,kepler_elements[:,7], 'C0', label='Ganymede Aerodynamic Acceleration')
+ax2.plot(time_days,kepler_elements[:,9], 'C2',label='Sun Gravitational Acceleration')
+ax2.plot(time_days,kepler_elements[:,11], 'C3',label='Saturn Gravitational Acceleration')
+
+
+lines, labels = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+test = lines+lines2
+test2 = labels+labels2
+leg = ax2.legend(test, test2, loc=1)
+i = 0
+for text in leg.get_texts():
+
+    if i>2:
+        text.set_color("C1")
+    i +=1
+
+ax1.grid()
+ax1.set_xlim([min(time_days),max(time_days)])
+ax1.set_xlabel('Time [days]')
+ax1.set_ylabel('Acceleration [m/s^2]')
+ax2.set_ylabel('Acceleration [m/s^2]')
+ax2.yaxis.label.set_color('C1')
+
+
 fig8 = plt.figure()
 ax1 = fig8.add_subplot(1,1,1)
 ax2 = ax1.twinx()
@@ -302,8 +335,8 @@ ax1.plot(time_days,kepler_elements[:,15],label='Ganymede (0,0)')
 ax2.plot(time_days,kepler_elements[:,16], 'C1', label='Ganymede (2,0)')
 ax2.plot(time_days,kepler_elements[:,17], 'C2', label='Ganymede (2,2)')
 ax2.plot(time_days,kepler_elements[:,18], 'C3', label='Jupiter (0,0)')
-ax2.plot(time_days,kepler_elements[:,19], 'C4', label='Jupiter (2,0)')
-ax2.plot(time_days,kepler_elements[:,20], 'C5', label='Jupiter (4,0)')
+#ax2.plot(time_days,kepler_elements[:,19], 'C4', label='Jupiter (2,0)')
+#ax2.plot(time_days,kepler_elements[:,20], 'C5', label='Jupiter (4,0)')
 ax1.set_xlabel('Time [days]')
 ax1.set_ylabel('Acceleration [m/s^2]')
 ax2.set_ylabel('Acceleration [m/s^2]')
@@ -322,6 +355,166 @@ for text in leg.get_texts():
         text.set_color("C1")
     i +=1
 
+fig82 = plt.figure()
+ax1 = fig82.add_subplot(1,1,1)
+ax2 = ax1.twinx()
+ax1.plot(time_days,kepler_elements[:,19], 'C4', label='Jupiter (2,0)')
+ax1.plot(time_days,kepler_elements[:,20], 'C5', label='Jupiter (4,0)')
+ax1.set_xlabel('Time [days]')
+ax1.set_ylabel('Acceleration [m/s^2]')
+ax2.set_ylabel('Acceleration [m/s^2]')
+ax2.yaxis.label.set_color('C1')
+ax1.grid()
+ax1.set_xlim(min(time_days),max(time_days))
+lines, labels = ax1.get_legend_handles_labels()
+lines2, labels2 = ax2.get_legend_handles_labels()
+test = lines+lines2
+test2 = labels+labels2
+leg = ax2.legend(test, test2, loc=1)
+i = 0
+for text in leg.get_texts():
+
+    if i!=0:
+        text.set_color("C1")
+    i +=1
+
+'''
+
+fig7 = plt.figure()
+ax1 = fig7.add_subplot(3,3,1)
+ax2 = fig7.add_subplot(3,3,2)
+ax3 = fig7.add_subplot(3,3,3)
+ax4 = fig7.add_subplot(3,3,4)
+ax5 = fig7.add_subplot(3,3,5)
+ax6 = fig7.add_subplot(3,3,6)
+ax7 = fig7.add_subplot(3,3,7)
+ax8 = fig7.add_subplot(3,3,8)
+ax9 = fig7.add_subplot(3,3,9)
+
+#6-14
+ax1.plot(time_days,kepler_elements[:,6])
+ax2.plot(time_days,kepler_elements[:,7])
+ax3.plot(time_days,kepler_elements[:,8])
+ax4.plot(time_days,kepler_elements[:,9])
+ax5.plot(time_days,kepler_elements[:,10])
+ax6.plot(time_days,kepler_elements[:,11])
+ax7.plot(time_days,kepler_elements[:,12])
+ax8.plot(time_days,kepler_elements[:,13])
+ax9.plot(time_days,kepler_elements[:,14])
+
+ax1.set_xlim(time_days[0],time_days[-1])
+ax2.set_xlim(time_days[0],time_days[-1])
+ax3.set_xlim(time_days[0],time_days[-1])
+ax4.set_xlim(time_days[0],time_days[-1])
+ax5.set_xlim(time_days[0],time_days[-1])
+ax6.set_xlim(time_days[0],time_days[-1])
+ax7.set_xlim(time_days[0],time_days[-1])
+ax8.set_xlim(time_days[0],time_days[-1])
+ax9.set_xlim(time_days[0],time_days[-1])
+
+ax1.set_title('Ganymede Gravitational Acceleration', fontsize=14)
+ax2.set_title('Ganymede Aerodynamic Acceleration', fontsize=14)
+ax3.set_title('Jupiter Gravitational Acceleration', fontsize=14)
+ax4.set_title('Sun Gravitational Acceleration', fontsize=14)
+ax5.set_title('Sun Radiation Pressure', fontsize=14)
+ax6.set_title('Saturn Gravitational Acceleration', fontsize=14)
+ax7.set_title('Europa Gravitational Acceleration', fontsize=14)
+ax8.set_title('Io Gravitational Acceleration', fontsize=14)
+ax9.set_title('Callisto Gravitational Acceleration', fontsize=14)
+
+ax1.set_xlabel('Time [days]')
+ax2.set_xlabel('Time [days]')
+ax3.set_xlabel('Time [days]')
+ax4.set_xlabel('Time [days]')
+ax5.set_xlabel('Time [days]')
+ax6.set_xlabel('Time [days]')
+ax7.set_xlabel('Time [days]')
+ax8.set_xlabel('Time [days]')
+ax9.set_xlabel('Time [days]')
+
+ax1.set_ylabel('Acceleration [m/s^2]')
+ax2.set_ylabel('Acceleration [m/s^2]')
+ax3.set_ylabel('Acceleration [m/s^2]')
+ax4.set_ylabel('Acceleration [m/s^2]')
+ax5.set_ylabel('Acceleration [m/s^2]')
+ax6.set_ylabel('Acceleration [m/s^2]')
+ax7.set_ylabel('Acceleration [m/s^2]')
+ax8.set_ylabel('Acceleration [m/s^2]')
+ax9.set_ylabel('Acceleration [m/s^2]')
+
+
+ax1.grid()
+ax2.grid()
+ax3.grid()
+ax4.grid()
+ax5.grid()
+ax6.grid()
+ax7.grid()
+ax8.grid()
+ax9.grid()
+
+
+fig8 = plt.figure()
+ax1 = fig8.add_subplot(2,3,1)
+ax2 = fig8.add_subplot(2,3,2)
+ax3 = fig8.add_subplot(2,3,3)
+ax4 = fig8.add_subplot(2,3,4)
+ax5 = fig8.add_subplot(2,3,5)
+ax6 = fig8.add_subplot(2,3,6)
+
+ax1.plot(time_days,kepler_elements[:,15])
+ax2.plot(time_days,kepler_elements[:,16])
+ax3.plot(time_days,kepler_elements[:,17])
+ax4.plot(time_days,kepler_elements[:,18])
+ax5.plot(time_days,kepler_elements[:,19])
+ax6.plot(time_days,kepler_elements[:,20])
+
+ax1.grid()
+ax2.grid()
+ax3.grid()
+ax4.grid()
+ax5.grid()
+ax6.grid()
+
+ax1.set_xlim(time_days[0],time_days[-1])
+ax2.set_xlim(time_days[0],time_days[-1])
+ax3.set_xlim(time_days[0],time_days[-1])
+ax4.set_xlim(time_days[0],time_days[-1])
+ax5.set_xlim(time_days[0],time_days[-1])
+ax6.set_xlim(time_days[0],time_days[-1])
+
+ax1.set_title('Ganymede (0,0)',fontsize=14)
+ax2.set_title('Ganymede (2,0)',fontsize=14)
+ax3.set_title('Ganymede (2,2)',fontsize=14)
+ax4.set_title('Jupiter (0,0)',fontsize=14)
+ax5.set_title('Jupiter (2,0)',fontsize=14)
+ax6.set_title('Jupiter (4,0)',fontsize=14)
+
+ax1.set_xlabel('Time [days]')
+ax2.set_xlabel('Time [days]')
+ax3.set_xlabel('Time [days]')
+ax4.set_xlabel('Time [days]')
+ax5.set_xlabel('Time [days]')
+ax6.set_xlabel('Time [days]')
+
+ax1.set_ylabel('Acceleration [m/s^2]')
+ax2.set_ylabel('Acceleration [m/s^2]')
+ax3.set_ylabel('Acceleration [m/s^2]')
+ax4.set_ylabel('Acceleration [m/s^2]')
+ax5.set_ylabel('Acceleration [m/s^2]')
+ax6.set_ylabel('Acceleration [m/s^2]')
+
+
+
+'''
+ax1.plot(time_days,kepler_elements[:,15],label='Ganymede (0,0)')
+ax2.plot(time_days,kepler_elements[:,16], 'C1', label='Ganymede (2,0)')
+ax2.plot(time_days,kepler_elements[:,17], 'C2', label='Ganymede (2,2)')
+ax2.plot(time_days,kepler_elements[:,18], 'C3', label='Jupiter (0,0)')
+#ax2.plot(time_days,kepler_elements[:,19], 'C4', label='Jupiter (2,0)')
+#ax2.plot(time_days,kepler_elements[:,20], 'C5', label='Jupiter (4,0)')
+'''
+
 time_hours = np.multiply(time_days,24)
 
 fig9 = plt.figure()
@@ -338,6 +531,8 @@ ax2.set_xlabel('Time [hours]')
 ax2.set_ylabel('Acceleration [m/s^2]')
 ax2.set_xlim(min(time_hours), max(time_hours))
 ax2.grid()
+
+
 
 plt.show()
 
