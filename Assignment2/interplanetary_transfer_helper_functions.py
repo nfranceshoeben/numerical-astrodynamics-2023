@@ -14,6 +14,7 @@ import numpy as np
 from tudatpy.io import save2txt
 from tudatpy.kernel import constants
 from tudatpy.kernel import numerical_simulation
+from tudatpy.kernel.interface import spice
 from tudatpy.kernel.interface import spice_interface
 from tudatpy.kernel.numerical_simulation import environment_setup
 from tudatpy.kernel.numerical_simulation import estimation_setup
@@ -21,12 +22,13 @@ from tudatpy.kernel.numerical_simulation import propagation_setup
 from tudatpy.kernel.numerical_simulation import environment
 from tudatpy.kernel.astro import two_body_dynamics
 from tudatpy.kernel.astro import element_conversion
+from tudatpy.util import result2array
 
 # Define departure/arrival epoch - in seconds since J2000
-departure_epoch = XXXX
-time_of_flight = XXXX
+departure_epoch = 2055.746011*86400
+time_of_flight = 215.3577652*86400
 arrival_epoch = departure_epoch + time_of_flight
-target_body = XXXX
+target_body = 'Mars'
 global_frame_orientation = 'ECLIPJ2000'
 fixed_step_size = 3600.0
 
@@ -332,7 +334,7 @@ def get_sensitivity_parameter_set(
     if use_rsw_acceleration == True:
         parameter_settings.append(estimation_setup.parameter.constant_empirical_acceleration_terms("Spacecraft", "Sun"))
 
-    return estimation_setup.create_parameters_to_estimate(parameter_settings, bodies, propagator_settings)
+    return estimation_setup.create_parameter_set(parameter_settings, bodies, propagator_settings)
 
 
 ################ HELPER FUNCTIONS: MODIFY ########################################
@@ -360,9 +362,50 @@ def get_unperturbed_propagator_settings(
     ------
     Propagation settings of the unperturbed trajectory.
     """
+    # Define bodies that are propagated, and their central bodies of propagation.
+    bodies_to_propagate = ['Spacecraft']
+    central_bodies = ['Sun']
+
+    # Define accelerations acting on vehicle.
+    acceleration_settings_on_vehicle = dict(
+        Sun=[propagation_setup.acceleration.point_mass_gravity()]
+    )
+
+    # Create global accelerations dictionary.
+    acceleration_settings = {'Spacecraft': acceleration_settings_on_vehicle}
+
+    # Create acceleration models.
+    acceleration_models = propagation_setup.create_acceleration_models(
+            bodies, acceleration_settings, bodies_to_propagate, central_bodies)
+    
+
+    # Define required outputs
+    #dependent_variables_to_save = [propagation_setup.dependent_variable.cartesian_state('Spacecraft')]
+
+    # Create numerical integrator settings.
+    integrator_settings = propagation_setup.integrator.runge_kutta_4(
+        fixed_step_size
+    )
+
+    initial_state_2D = np.reshape(initial_state, (6,-1))
+
+    #dependent_variables_to_save = [propagation_setup.dependent_variable.keplerian_state('Spacecraft','Sun')]
 
     # Create propagation settings.
-    propagator_settings = XXXX
+    termination_settings = propagation_setup.propagator.time_termination(final_time)
+    propagator_settings = propagation_setup.propagator.translational(
+        central_bodies,
+        acceleration_models,
+        bodies_to_propagate,
+        initial_state_2D,
+        initial_time,
+        integrator_settings,
+        termination_settings
+    )
+
+    propagator_settings.print_settings.print_initial_and_final_conditions = True
+
+    #propagator_settings = XXXX
 
     return propagator_settings
 
@@ -397,16 +440,57 @@ def get_perturbed_propagator_settings(
     ------
     Propagation settings of the perturbed trajectory.
     """
+    central_bodies = ['Sun']
+    bodies_to_propagate = ['Spacecraft']
+
+    initial_state_2D = np.reshape(initial_state, (6,-1))
+
+    # Create radiation pressure settings, and add to vehicle
+    reference_area_radiation = 20.0
+    radiation_pressure_coefficient = 1.2
+    occulting_bodies = ["Earth"]
+    radiation_pressure_settings = environment_setup.radiation_pressure.cannonball(
+        "Sun", reference_area_radiation, radiation_pressure_coefficient
+    )
+    environment_setup.add_radiation_pressure_interface(
+        bodies, "Spacecraft", radiation_pressure_settings)
 
 
     # Define accelerations acting on vehicle.
-    acceleration_settings_on_spacecraft = XXXX
+    termination_settings = propagation_setup.propagator.time_termination(final_time)
+    acceleration_settings_on_spacecraft = dict(
+        Sun=[propagation_setup.acceleration.point_mass_gravity(),
+             propagation_setup.acceleration.cannonball_radiation_pressure()],
+        Venus=[propagation_setup.acceleration.point_mass_gravity()],
+        Earth=[propagation_setup.acceleration.point_mass_gravity()],
+        Moon=[propagation_setup.acceleration.point_mass_gravity()],
+        Mars=[propagation_setup.acceleration.point_mass_gravity()],
+        Jupiter=[propagation_setup.acceleration.point_mass_gravity()],
+        Saturn=[propagation_setup.acceleration.point_mass_gravity()]
+    )
+
+    # Create global accelerations dictionary.
+    acceleration_settings = {'Spacecraft': acceleration_settings_on_spacecraft}
+
+    
+    
+
+    # Define required outputs
+    #dependent_variables_to_save = [propagation_setup.dependent_variable.cartesian_state('Spacecraft')]
+
+    
 
     # DO NOT MODIFY, and keep AFTER creation of acceleration_settings_on_spacecraft
     # (line is added for compatibility with question 4)
     if use_rsw_acceleration:
         acceleration_settings_on_spacecraft["Sun"].append(
             propagation_setup.acceleration.empirical(rsw_acceleration_magnitude))
+        
+    # Create acceleration models.
+    acceleration_models = propagation_setup.create_acceleration_models(
+            bodies, acceleration_settings, bodies_to_propagate, central_bodies)
+        
+    fixed_step_size = 3600.0
 
     # If propagation is backwards in time, make initial time step negative
     if initial_time > final_time:
@@ -414,8 +498,26 @@ def get_perturbed_propagator_settings(
     else:
         signed_fixed_step_size = fixed_step_size
 
+    # Create numerical integrator settings.
+    
+    integrator_settings = propagation_setup.integrator.runge_kutta_4(
+        signed_fixed_step_size
+    )
+
+    # Define required outputs
+    dependent_variables_to_save = [propagation_setup.dependent_variable.total_acceleration('Spacecraft')]
+
     # Create propagation settings.
-    propagator_settings = XXXX
+    propagator_settings = propagation_setup.propagator.translational(
+        central_bodies,
+        acceleration_models,
+        bodies_to_propagate,
+        initial_state_2D,
+        initial_time,
+        integrator_settings,
+        termination_settings,
+        output_variables = dependent_variables_to_save
+    )
 
     return propagator_settings
 
@@ -437,8 +539,86 @@ def create_simulation_bodies( ) -> environment.SystemOfBodies:
 
     """
 
-    bodies = XXXX
+    bodies_to_create = ['Sun','Venus','Earth','Moon','Mars','Jupiter','Saturn']
+    global_frame_origin = 'Sun'
+    global_frame_orientation = 'ECLIPJ2000'
+    body_settings = environment_setup.get_default_body_settings(
+    bodies_to_create, global_frame_origin, global_frame_orientation)
+    bodies = environment_setup.create_system_of_bodies(body_settings)
+    bodies.create_empty_body( 'Spacecraft' )
+    bodies.get("Spacecraft").mass = 1000.0
+
+    #bodies = XXXX
 
     return bodies
+
+
+def computeError(initial_variation,arc_index,arc_length,bodies,lambert_arc_ephemeris):
+
+    lambert_arc_ephemeris = get_lambert_problem_result(bodies, target_body, (departure_epoch), (arrival_epoch))
+
+    # Compute relevant parameters (dynamics, state transition matrix, Delta V) for each arc
+    
+    # Compute initial and final time for arc
+    current_arc_initial_time = departure_epoch + 62*3600 + arc_index*arc_length
+    current_arc_final_time = current_arc_initial_time + arc_length
+
+    ###########################################################################
+    # RUN CODE FOR QUESTION 3a ################################################
+    ###########################################################################
+
+    ###########################################################################
+    # RUN CODE FOR QUESTION 3c/d/e ############################################
+    ###########################################################################
+    # Note: for question 3e, part of the code below will be put into a loop
+    # for the requested iterations
+
+    # Solve for state transition matrix on current arc
+    variational_equations_solver = propagate_variational_equations(current_arc_initial_time,
+                                                                current_arc_final_time, bodies,
+                                                                lambert_arc_ephemeris)
+    state_transition_matrix_history = variational_equations_solver.state_transition_matrix_history
+    state_history = variational_equations_solver.state_history
+    lambert_history = get_lambert_arc_history(lambert_arc_ephemeris, state_history)
+
+    # Get final state transition matrix (and its inverse)
+    initial_epoch = list(state_transition_matrix_history.keys())[0]
+    final_epoch = list(state_transition_matrix_history.keys())[-1]
+    final_state_transition_matrix = state_transition_matrix_history[final_epoch]
+    state_transition_matrix3x3 = final_state_transition_matrix[:3,3:]
+    inverse_state_transition_matrix3x3 = np.linalg.inv(state_transition_matrix3x3)
+
+    # Retrieve final state deviation
+    final_state_deviation = state_history[final_epoch] - lambert_history[final_epoch]
+
+    # Compute required velocity change at beginning of arc to meet required final state
+
+    deltaV = inverse_state_transition_matrix3x3 @ final_state_deviation[:3].T
+    initial_state_correction = -np.concatenate([np.array([0,0,0]),deltaV])
+
+    error = np.zeros([len(state_transition_matrix_history),6])
+
+    for i in range(len(state_transition_matrix_history)):
+
+        epoch = list(state_transition_matrix_history.keys())[i]
+        state_transition_matrix = state_transition_matrix_history[epoch]
+
+        error_t = state_transition_matrix@initial_state_correction - state_history[epoch] + lambert_history[epoch]
+        error[i,:] = error_t
+
+    errorTotal = np.linalg.norm(error,axis=1)
+
+    return errorTotal
+
+
+
+
+    # Propagate with correction to initial state (use propagate_trajecory function),
+    # and its optional initial_state_correction input
+    dynamics_simulator = propagate_trajectory(current_arc_initial_time, current_arc_final_time, bodies, lambert_arc_ephemeris,
+                            use_perturbations = True, initial_state_correction=initial_state_correction)
+
+        
+
 
 
