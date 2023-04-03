@@ -84,8 +84,13 @@ dynamics_simulator = propagate_trajectory(departure_epoch_with_buffer, arrival_e
 array = result2array(dynamics_simulator.state_history)
 lambert = result2array(get_lambert_arc_history(lambert_arc_ephemeris,dynamics_simulator.state_history))
 
-difference = array-lambert
+write_propagation_results_to_file(
+            dynamics_simulator, lambert_arc_ephemeris, "Q4_b",output_directory+'/Q4_Arcs/')
 
+difference = array-lambert
+print("Hello! I'll give you the last epoch you want:")
+print(array[-1,:])
+print("And remember! La fòrmula no s'equivoca!")
 print(f'Last difference; {difference[-1,:]}')
 
 lastArray = array[-1,:]
@@ -104,6 +109,27 @@ ax1.plot(array[:,0],(array[:,1]-lambert[:,1]))
 ax2.plot(array[:,0],(array[:,2]-lambert[:,2]))
 ax3.plot(array[:,0],(array[:,3]-lambert[:,3]))
 
+ax1.grid()
+ax2.grid()
+ax3.grid()
+
+ax1.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+ax2.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+ax3.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+
+ax1.set_xlabel('Epoch [s]')
+ax2.set_xlabel('Epoch [s]')
+ax3.set_xlabel('Epoch [s]')
+
+ax1.set_ylabel('Position difference [m]')
+ax2.set_ylabel('Position difference [m]')
+ax3.set_ylabel('Position difference [m]')
+
+ax1.set_title('Position difference in the X-direction')
+ax2.set_title('Position difference in the Y-direction')
+ax3.set_title('Position difference in the Z-direction')
+
+
 fig2 = plt.figure()
 ax1 = fig2.add_subplot(1,3,1)
 ax2 = fig2.add_subplot(1,3,2)
@@ -112,6 +138,26 @@ ax3 = fig2.add_subplot(1,3,3)
 ax1.plot(array[:,0],(array[:,4]-lambert[:,4]))
 ax2.plot(array[:,0],(array[:,5]-lambert[:,5]))
 ax3.plot(array[:,0],(array[:,6]-lambert[:,6]))
+
+ax1.grid()
+ax2.grid()
+ax3.grid()
+
+ax1.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+ax2.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+ax3.set_xlim(min(lambert[:,0]),max(lambert[:,0]))
+
+ax1.set_xlabel('Epoch [s]')
+ax2.set_xlabel('Epoch [s]')
+ax3.set_xlabel('Epoch [s]')
+
+ax1.set_ylabel(r'Velocity difference [$m/s$]')
+ax2.set_ylabel(r'Velocity difference [$m/s$]')
+ax3.set_ylabel(r'Velocity difference [$m/s$]')
+
+ax1.set_title('Velocity difference in the X-direction')
+ax2.set_title('Velocity difference in the Y-direction')
+ax3.set_title('Velocity difference in the Z-direction')
 
 print(f'Final epoch: {final_epoch}')
 
@@ -524,3 +570,7 @@ ax.plot(numerical[:,1],numerical[:,2],numerical[:,3])
 ax.plot(lambert[:,1],lambert[:,2],lambert[:,3])
 
 plt.show()
+
+print("Hello! I'll give you the last epoch you want:")
+print(numerical[-1,:])
+print("And remember! La fòrmula no s'equivoca!")

@@ -22,6 +22,7 @@ from tudatpy.kernel.numerical_simulation import propagation_setup
 from tudatpy.kernel.numerical_simulation import environment
 from tudatpy.kernel.astro import two_body_dynamics
 from tudatpy.kernel.astro import element_conversion
+from tudatpy.kernel.astro import frame_conversion
 from tudatpy.util import result2array
 
 # Define departure/arrival epoch - in seconds since J2000
@@ -553,7 +554,7 @@ def create_simulation_bodies( ) -> environment.SystemOfBodies:
     return bodies
 
 
-def computeError(initial_variation,arc_index,arc_length,bodies,lambert_arc_ephemeris):
+def computeError(initial_variation,nominal_state_history,state_transition_matrix_history,arc_index,arc_length,bodies,lambert_arc_ephemeris,initial_time,final_time):
 
     lambert_arc_ephemeris = get_lambert_problem_result(bodies, target_body, (departure_epoch), (arrival_epoch))
 
@@ -563,52 +564,47 @@ def computeError(initial_variation,arc_index,arc_length,bodies,lambert_arc_ephem
     current_arc_initial_time = departure_epoch + 62*3600 + arc_index*arc_length
     current_arc_final_time = current_arc_initial_time + arc_length
 
-    ###########################################################################
-    # RUN CODE FOR QUESTION 3a ################################################
-    ###########################################################################
-
-    ###########################################################################
-    # RUN CODE FOR QUESTION 3c/d/e ############################################
-    ###########################################################################
-    # Note: for question 3e, part of the code below will be put into a loop
-    # for the requested iterations
-
     # Solve for state transition matrix on current arc
-    variational_equations_solver = propagate_variational_equations(current_arc_initial_time,
+    '''variational_equations_solver = propagate_variational_equations(current_arc_initial_time,
                                                                 current_arc_final_time, bodies,
                                                                 lambert_arc_ephemeris)
     state_transition_matrix_history = variational_equations_solver.state_transition_matrix_history
     state_history = variational_equations_solver.state_history
-    lambert_history = get_lambert_arc_history(lambert_arc_ephemeris, state_history)
+    lambert_history = get_lambert_arc_history(lambert_arc_ephemeris, state_history)'''
 
-    # Get final state transition matrix (and its inverse)
-    initial_epoch = list(state_transition_matrix_history.keys())[0]
-    final_epoch = list(state_transition_matrix_history.keys())[-1]
-    final_state_transition_matrix = state_transition_matrix_history[final_epoch]
-    state_transition_matrix3x3 = final_state_transition_matrix[:3,3:]
-    inverse_state_transition_matrix3x3 = np.linalg.inv(state_transition_matrix3x3)
-
-    # Retrieve final state deviation
-    final_state_deviation = state_history[final_epoch] - lambert_history[final_epoch]
-
-    # Compute required velocity change at beginning of arc to meet required final state
-
-    deltaV = inverse_state_transition_matrix3x3 @ final_state_deviation[:3].T
-    initial_state_correction = -np.concatenate([np.array([0,0,0]),deltaV])
+    dynamics_simulator = propagate_trajectory(initial_time,final_time,bodies,lambert_arc_ephemeris,
+                                              use_perturbations=True,initial_state_correction=initial_variation)
+    state_history = dynamics_simulator.state_history
+    #difference = array[:,1:] - nominal_state_history[:,1:]
 
     error = np.zeros([len(state_transition_matrix_history),6])
 
     for i in range(len(state_transition_matrix_history)):
 
         epoch = list(state_transition_matrix_history.keys())[i]
-        state_transition_matrix = state_transition_matrix_history[epoch]
+        matrix = state_transition_matrix_history[epoch]
+        deltaX = state_history[epoch] - nominal_state_history[epoch]
 
-        error_t = state_transition_matrix@initial_state_correction - state_history[epoch] + lambert_history[epoch]
-        error[i,:] = error_t
+        errorX =  matrix @ initial_variation - deltaX
+        error[i,:] = errorX
 
-    errorTotal = np.linalg.norm(error,axis=1)
+    # Get final state transition matrix (and its inverse)
+    '''final_epoch = list(state_transition_matrix_history.keys())[-1]
+    final_state_transition_matrix = state_transition_matrix_history[final_epoch]
+    state_transition_matrix3x3 = final_state_transition_matrix[:3,3:]
+    inverse_state_transition_matrix3x3 = np.linalg.inv(state_transition_matrix3x3)'''
 
-    return errorTotal
+    # Retrieve final state deviation
+    #final_state_deviation = state_history[final_epoch] - lambert_history[final_epoch]
+
+    # Compute required velocity change at beginning of arc to meet required final state
+
+    '''deltaV = inverse_state_transition_matrix3x3 @ initial_variation[:3].T
+    initial_state_correction = -np.concatenate([np.array([0,0,0]),deltaV])'''
+
+    #errorTotal = np.linalg.norm(error,axis=1)
+
+    return error
 
 
 
@@ -618,7 +614,67 @@ def computeError(initial_variation,arc_index,arc_length,bodies,lambert_arc_ephem
     dynamics_simulator = propagate_trajectory(current_arc_initial_time, current_arc_final_time, bodies, lambert_arc_ephemeris,
                             use_perturbations = True, initial_state_correction=initial_state_correction)
 
-        
+def computeErrorRSW(initial_variation_rsw,nominal_state_history,state_transition_matrix_history,arc_index,arc_length,bodies,lambert_arc_ephemeris,initial_time,final_time):
+
+    epoch = list(state_transition_matrix_history.keys())[0]
+    initial_state = nominal_state_history[epoch]
+    initial_variation_r = frame_conversion.rsw_to_inertial_rotation_matrix(initial_state) @ initial_variation_rsw[0:3]
+    initial_variation_v = frame_conversion.rsw_to_inertial_rotation_matrix(initial_state) @ initial_variation_rsw[3:]
+    initial_variation = np.concatenate([initial_variation_r,initial_variation_v])
+    lambert_arc_ephemeris = get_lambert_problem_result(bodies, target_body, (departure_epoch), (arrival_epoch))
+
+    # Compute relevant parameters (dynamics, state transition matrix, Delta V) for each arc
+    
+    # Compute initial and final time for arc
+    current_arc_initial_time = departure_epoch + 62*3600 + arc_index*arc_length
+    current_arc_final_time = current_arc_initial_time + arc_length
+
+    # Solve for state transition matrix on current arc
+    '''variational_equations_solver = propagate_variational_equations(current_arc_initial_time,
+                                                                current_arc_final_time, bodies,
+                                                                lambert_arc_ephemeris)
+    state_transition_matrix_history = variational_equations_solver.state_transition_matrix_history
+    state_history = variational_equations_solver.state_history
+    lambert_history = get_lambert_arc_history(lambert_arc_ephemeris, state_history)'''
+
+    dynamics_simulator = propagate_trajectory(initial_time,final_time,bodies,lambert_arc_ephemeris,
+                                              use_perturbations=True,initial_state_correction=initial_variation)
+    state_history = dynamics_simulator.state_history
+    #difference = array[:,1:] - nominal_state_history[:,1:]
+
+    error = np.zeros([len(state_transition_matrix_history),6])
+
+    for i in range(len(state_transition_matrix_history)):
+
+        epoch = list(state_transition_matrix_history.keys())[i]
+        matrix = state_transition_matrix_history[epoch]
+        deltaX = state_history[epoch] - nominal_state_history[epoch]
+
+        errorX =  matrix @ initial_variation - deltaX
+        rswRotation = frame_conversion.inertial_to_rsw_rotation_matrix(state_history[epoch])
+        errorXRotatedR = rswRotation @ errorX[0:3]
+        errorXRotatedV = rswRotation @ errorX[3:]
+        errorRotated = np.concatenate([errorXRotatedR,errorXRotatedV])
+        error[i,:] = errorRotated
+
+    # Get final state transition matrix (and its inverse)
+    '''final_epoch = list(state_transition_matrix_history.keys())[-1]
+    final_state_transition_matrix = state_transition_matrix_history[final_epoch]
+    state_transition_matrix3x3 = final_state_transition_matrix[:3,3:]
+    inverse_state_transition_matrix3x3 = np.linalg.inv(state_transition_matrix3x3)'''
+
+    # Retrieve final state deviation
+    #final_state_deviation = state_history[final_epoch] - lambert_history[final_epoch]
+
+    # Compute required velocity change at beginning of arc to meet required final state
+
+    '''deltaV = inverse_state_transition_matrix3x3 @ initial_variation[:3].T
+    initial_state_correction = -np.concatenate([np.array([0,0,0]),deltaV])'''
+
+    #errorTotal = np.linalg.norm(error,axis=1)
+
+
+    return error        
 
 
 
