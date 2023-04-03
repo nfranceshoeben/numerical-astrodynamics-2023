@@ -224,7 +224,7 @@ ax1.set_xlim(1,10)
 
 plt.show()
 
-np.savetxt('Question5_Results_AE4868_2023_2_4659554.dat', limitArray)
+np.savetxt('Question5_Results_AE4868_2023_2_4659554.dat', limitArray.T)
 
 
 
